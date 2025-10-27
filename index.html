@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPA – Users • Presensi • Faces (D1)</title>
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#334155; --soft:#1f2937; --text:#e5e7eb; --hi:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --card:#0b1220; --border:#223047;
+    }
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg, var(--bg), #0b1220);color:var(--text);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto}
+    a{color:var(--hi);text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .panel{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .title{font-weight:700;font-size:18px}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--border);padding:10px 14px;border-radius:12px;color:var(--text);cursor:pointer}
+    .btn.hi{background:var(--hi);color:#0b1220;border-color:transparent}
+    .btn.ok{background:var(--ok);color:#06120f;border-color:transparent}
+    .btn.bad{background:var(--bad)}
+    .input, select, textarea{background:#0c1424;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:12px;width:100%}
+    table{width:100%;border-collapse:collapse} th,td{padding:8px;border-bottom:1px solid var(--border)}
+    .right{margin-left:auto}
+    label{display:block;margin:6px 0}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .g-6{grid-column:span 6} .g-12{grid-column:span 12}
+    .note{font-size:12px;color:#9aa9c6}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="title">MVCS SPA – D1</div>
+      <div class="right" style="display:flex;gap:8px">
+        <input id="apiUrl" class="input" placeholder="https://api.bisbul.com" style="width:300px">
+        <input id="apiKey" class="input" placeholder="API Key (opsional)" style="width:220px">
+        <button id="saveCfg" class="btn ok">Simpan API</button>
+        <button id="gotoPresensi" class="btn">Buka presensi.html</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <section class="panel" style="flex:1 1 360px">
+        <div class="header"><div class="title">Users</div><button id="addUser" class="btn hi">Tambah</button></div>
+        <div id="usersTable"></div>
+      </section>
+
+      <section class="panel" style="flex:1 1 360px">
+        <div class="header"><div class="title">Presensi</div><button id="refreshPresensi" class="btn">Refresh</button></div>
+        <div id="presensiTable"></div>
+      </section>
+
+      <section class="panel" style="flex:1 1 360px">
+        <div class="header"><div class="title">Faces</div><button id="refreshFaces" class="btn">Refresh</button></div>
+        <div id="facesTable"></div>
+      </section>
+    </div>
+  </div>
+
+  <dialog id="dlg" style="border:1px solid var(--border);border-radius:12px;padding:16px;background:#0b1220;color:var(--text)">
+    <form method="dialog">
+      <div class="title" id="dlgTitle">Form</div>
+      <div id="dlgBody" style="margin:12px 0"></div>
+      <menu style="display:flex;gap:8px;justify-content:flex-end;margin:0;padding:0">
+        <button value="cancel" class="btn">Batal</button>
+        <button id="dlgSave" value="save" class="btn ok">Simpan</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script type="module">
+    import * as API from './api-client.js'
+
+    const elU = document.getElementById('usersTable')
+    const elP = document.getElementById('presensiTable')
+    const elF = document.getElementById('facesTable')
+    const apiUrl = document.getElementById('apiUrl')
+    const apiKey = document.getElementById('apiKey')
+    const saveCfg = document.getElementById('saveCfg')
+    const gotoPresensi = document.getElementById('gotoPresensi')
+    apiUrl.value = localStorage.getItem('BISBUL_API_URL') || ''
+    apiKey.value = localStorage.getItem('BISBUL_API_KEY') || ''
+
+    saveCfg.onclick = ()=>{
+      localStorage.setItem('BISBUL_API_URL', apiUrl.value.trim())
+      localStorage.setItem('BISBUL_API_KEY', apiKey.value.trim())
+      alert('Disimpan. Reload halaman untuk menerapkan.')
+    }
+    gotoPresensi.onclick = ()=>{ location.href = 'presensi.html' }
+
+    function table(container, rows, cols, actions=[]){
+      const t = document.createElement('table')
+      t.innerHTML = '<thead><tr>' + cols.map(c=>'<th>'+c.label+'</th>').join('') + (actions.length?'<th></th>':'') + '</tr></thead>'
+      const tb = document.createElement('tbody')
+      ;(rows||[]).forEach(r=>{
+        const tr = document.createElement('tr')
+        cols.forEach(c=>{
+          let v = r[c.key]
+          if (c.render) v = c.render(v, r)
+          tr.innerHTML += '<td>'+ (v==null?'':v) +'</td>'
+        })
+        if(actions.length){
+          const td = document.createElement('td'); td.style.textAlign='right'
+          actions.forEach(a=>{
+            const b = document.createElement('button'); b.className = 'btn'; b.textContent = a.label; b.onclick = ()=>a.onClick(r)
+            td.appendChild(b)
+          })
+          tr.appendChild(td)
+        }
+        tb.appendChild(tr)
+      })
+      t.appendChild(tb)
+      container.innerHTML=''; container.appendChild(t)
+    }
+
+    async function loadUsers(){
+      const res = await API.list('users', {page_size: 50})
+      table(elU, res.items, [
+        {key:'id', label:'ID'},
+        {key:'name', label:'Nama'},
+        {key:'email', label:'Email'},
+        {key:'role', label:'Role'}
+      ], [
+        {label:'Edit', onClick: (row)=> openUserForm(row)},
+        {label:'Hapus', onClick: async (row)=>{ if(confirm('Hapus user?')){ await API.removeRow('users', row.id); await refreshAll() } }}
+      ])
+    }
+
+    async function loadPresensi(){
+      const res = await API.list('presensi', {page_size: 50})
+      table(elP, res.items, [
+        {key:'id', label:'ID'},
+        {key:'user_id', label:'User'},
+        {key:'label', label:'Label'},
+        {key:'score', label:'Score'},
+        {key:'status', label:'Status'},
+        {key:'lokasi', label:'Lokasi'},
+        {key:'ts', label:'Waktu'}
+      ])
+    }
+
+    async function loadFaces(){
+      const res = await API.list('faces', {page_size: 50})
+      table(elF, res.items, [
+        {key:'id', label:'ID'},
+        {key:'user_id', label:'User'},
+        {key:'label', label:'Label'},
+        {key:'vec', label:'Vec (len)', render: (v)=>{ try{const arr=JSON.parse(v||'[]'); return Array.isArray(arr)?arr.length:'' }catch{return ''} }},
+        {key:'created_at', label:'Created'}
+      ])
+    }
+
+    async function refreshAll(){ await Promise.all([loadUsers(), loadPresensi(), loadFaces()]) }
+
+    // ----- Dialog simple form -----
+    const dlg = document.getElementById('dlg'), dlgTitle=document.getElementById('dlgTitle'), dlgBody=document.getElementById('dlgBody'), dlgSave=document.getElementById('dlgSave')
+    function input(name, label, type='text', value=''){ return '<label>'+label+'<input class="input" name="'+name+'" type="'+type+'" value="'+(value||'')+'"></label>' }
+    function openUserForm(row){
+      row = row || {name:'', email:'', password:'', role:'member', uid:''}
+      dlgTitle.textContent = (row.id?'Edit':'Tambah')+' User'
+      dlgBody.innerHTML = input('name','Nama','text',row.name)+ input('email','Email','email',row.email)+ input('password','Password','text',row.password)+ input('role','Role','text',row.role)+ input('uid','UID','text',row.uid)
+      dlg.showModal()
+      dlgSave.onclick = async ()=>{
+        const fd = new FormData(dlg.querySelector('form'))
+        const data = Object.fromEntries(fd.entries())
+        try{
+          if(row.id) await API.update('users', row.id, data); else await API.create('users', data)
+          dlg.close(); await refreshAll()
+        }catch(e){ alert(e.message) }
+      }
+    }
+    document.getElementById('addUser').onclick = ()=> openUserForm(null)
+    document.getElementById('refreshPresensi').onclick = loadPresensi
+    document.getElementById('refreshFaces').onclick = loadFaces
+
+    refreshAll().catch(e=>alert(e.message))
+  </script>
+</body>
+</html>
