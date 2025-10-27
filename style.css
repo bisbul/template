@@ -1,0 +1,110 @@
+
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#334155; --soft:#1f2937; --text:#e5e7eb; --hi:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --card:#0b1220; --border:#223047;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg, var(--bg), #0b1220);color:var(--text);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"}
+    a{color:var(--hi);text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .col{flex:1 1 360px}
+    .panel{background:rgba(255,255,255,0.03);backdrop-filter: blur(4px); border:1px solid var(--border);border-radius:16px;padding:16px}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .title{font-weight:700;font-size:18px}
+    .subtle{color:#93a4bf}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--border);padding:10px 14px;border-radius:12px;color:var(--text);cursor:pointer}
+    .btn:hover{background:#223047}
+    .btn.hi{background:var(--hi);color:#0b1220;border-color:transparent}
+    .btn.ok{background:var(--ok);color:#06120f;border-color:transparent}
+    .btn.bad{background:var(--bad)}
+    .btn.warn{background:var(--warn);color:#161000}
+    .btn.ghost{background:transparent}
+    .input, select, textarea{background:#0c1424;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:12px;width:100%}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .g-6{grid-column:span 6}
+    .g-12{grid-column:span 12}
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .table th{font-weight:600;text-align:left;color:#a9bbda;padding:6px 8px}
+    .table td{padding:8px;background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .table tr td:first-child{border-left:1px solid var(--border);border-top-left-radius:10px;border-bottom-left-radius:10px}
+    .table tr td:last-child{border-right:1px solid var(--border);border-top-right-radius:10px;border-bottom-right-radius:10px}
+    .chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:#0e2038;border:1px solid var(--border);color:#9ec9ff;font-size:12px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .right{margin-left:auto}
+    canvas{max-width:100%;height:240px}
+    .k{color:#86efac}
+    .v{color:#93c5fd}
+    .kv{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace}
+    .center{display:flex;align-items:center;justify-content:center}
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .note{font-size:12px;color:#9aa9c6}
+    .hr{height:1px;background:linear-gradient(90deg, transparent, #24324b, transparent);margin:10px -16px}
+    .tag{background:#132035;border:1px solid #24324b;border-radius:10px;padding:8px 10px;color:#9dc1ff;display:inline-flex;gap:8px;align-items:center}
+    .avatar{width:28px;height:28px;border-radius:999px;background:linear-gradient(135deg,#22d3ee,#3b82f6)}
+
+
+    .avatar {
+      width: 359px;
+      height: 135px;
+      /* border-radius: 999px; */
+      background-image: url('logo-informatika.png'); /* Mengganti gradient dengan gambar */
+      background-size: cover; /* Memastikan gambar menutupi seluruh area tanpa distorsi */
+      background-position: center; /* Memastikan gambar terpusat */
+    }
+
+    /* CONTAINER UNTUK LAYOUT 2 KOLOM */
+    .dashboard-layout-container {
+        display: flex;
+        gap: 20px; /* Jarak antara sidebar dan konten utama */
+        align-items: flex-start; /* Konten dimulai dari atas */
+        padding-top: 20px;
+    }
+
+    /* SIDEBAR NAVIGASI */
+    .dashboard-layout-container .sidebar-nav {
+        /* Membuat kolom navigasi lebih kecil */
+        flex: 0 0 200px;
+        /* Memastikan tombol disusun vertikal */
+        display: block;
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+    }
+
+    /* Tombol di dalam Sidebar harus disusun vertikal */
+    .sidebar-nav .toolbar {
+        display: flex;
+        flex-direction: column; /* Tombol stack vertikal */
+        gap: 8px; /* Jarak antar tombol */
+    }
+
+    /* Tombol di sidebar mengambil lebar penuh */
+    .sidebar-nav button {
+        width: 100%;
+        justify-content: flex-start; /* Rata kiri */
+    }
+
+
+    /* KONTEN UTAMA */
+    .main-content-area {
+        /* Mengambil sisa ruang */
+        flex: 1;
+        /* Mengatur tata letak vertikal untuk konten (header + panel lainnya) */
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Jarak antar panel konten */
+    }
+
+    /* Atur ulang style section/panel agar tidak double padding */
+    .dashboard-layout-container .panel {
+        width: 100%;
+        margin-bottom: 0; /* Menghapus margin bawah standar */
+    }
+
+    /* Agar header (yang berisi Logout) tetap di atas tanpa terpengaruh layout 2 kolom */
+    .wrap > .panel:first-child {
+        width: 100%;
+        margin-bottom: 20px;
+    }

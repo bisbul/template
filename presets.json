@@ -1,0 +1,125 @@
+{
+  "api": {
+    "base": "https://api.bisbul.com/api",
+    "key": "rahasiaku123"
+  },
+
+  "tables": {
+    "users": {
+      "table": "users",
+      "label": "Users",
+      "addLabel": "Tambah User",
+      "schema": [
+        { "key": "name", "label": "Nama", "type": "text" },
+        { "key": "email", "label": "Email", "type": "email" },
+        { "key": "password", "label": "Password", "type": "password" },
+        { "key": "role", "label": "Peran", "type": "select", "options": [
+          { "label": "Admin", "value": "admin" },
+          { "label": "Member", "value": "member" }
+        ]}
+      ]
+    },
+    "presensi": {
+      "table": "presensi",
+      "label": "Presensi",
+      "addLabel": "Tambah Presensi",
+      "schema": [
+        { "key": "uid", "label": "User ID", "type": "number" },
+        { "key": "tanggal", "label": "Tanggal", "type": "date" },
+        { "key": "status", "label": "Status", "type": "select", "options": [
+          { "label": "Hadir", "value": "hadir" },
+          { "label": "Izin", "value": "izin" },
+          { "label": "Sakit", "value": "sakit" },
+          { "label": "Alfa", "value": "alfa" }
+        ]},
+        { "key": "lokasi", "label": "Lokasi", "type": "text" }
+      ]
+    },
+    "menu": {
+      "table": "menu",
+      "label": "Menu",
+      "addLabel": "Tambah Menu",
+      "schema": [
+        { "key": "name", "label": "Nama Menu", "type": "text" },
+        { "key": "price", "label": "Harga", "type": "number" },
+        { "key": "category", "label": "Kategori", "type": "text" }
+      ]
+    },
+    "review": {
+      "table": "review",
+      "label": "Review",
+      "addLabel": "Tambah Review",
+      "schema": [
+        { "key": "menu_id", "label": "Menu ID", "type": "number" },
+        { "key": "rating", "label": "Rating (1-5)", "type": "number" },
+        { "key": "comment", "label": "Komentar", "type": "textarea", "fullWidth": true }
+      ]
+    },
+    "kuesioner_meta": {
+      "table": "kuesioner_meta",
+      "label": "Admin Kuesioner",
+      "addLabel": "Tambah Kuesioner",
+      "schema": [
+        { "key": "name", "label": "Nama Kuesioner", "type": "text", "fullWidth": true },
+        { "key": "questions", "label": "Questions (JSON Array)", "type": "textarea", "fullWidth": true },
+        { "key": "options", "label": "Options (JSON Array)", "type": "textarea", "fullWidth": true }
+      ]
+    },
+    "kuesioner_respons": {
+      "table": "kuesioner_respons",
+      "label": "Respon Kuesioner",
+      "addLabel": "Tambah Respon",
+      "schema": [
+        { "key": "kuesioner_id", "label": "ID Kuesioner", "type": "number" },
+        { "key": "user_id", "label": "ID User", "type": "number" },
+        { "key": "pertanyaan_key", "label": "Key Pertanyaan", "type": "text" },
+        { "key": "jawaban_value", "label": "Jawaban Value", "type": "text" },
+        { "key": "submitted_at", "label": "Waktu Submit", "type": "date" }
+      ]
+    }
+  },
+
+  "kuesioner_skema": {
+    "q_kepuasan": {
+        "id": 1,
+        "judul": "Survei Kepuasan Pelayanan (contoh statis)",
+        "options": "[{\"value\": \"1\", \"label\": \"Sangat Tidak Puas\"}, {\"value\": \"2\", \"label\": \"Tidak Puas\"}, {\"value\": \"3\", \"label\": \"Cukup Puas\"}, {\"value\": \"4\", \"label\": \"Puas\"}, {\"value\": \"5\", \"label\": \"Sangat Puas\"}]",
+        "questions": "[{\"key\": \"q1\", \"label\": \"Kualitas pelayanan staf sangat memuaskan\"}, {\"key\": \"q2\", \"label\": \"Kecepatan respons terhadap permintaan Anda\"}, {\"key\": \"q3\", \"label\": \"Kebersihan dan kenyamanan lingkungan\"}]"
+    }
+  },
+
+  "login": {
+    "components": [
+      { "kind": "header", "title": "Demo SPA Preset JSON UI", "subtitle": "D1 via Worker · Dynamic Tables" },
+      { "kind": "form", "title": "Masuk", "table": "users", "schema": [
+        { "key": "email", "label": "Email", "type": "email", "fullWidth": true },
+        { "key": "password", "label": "Password", "type": "password", "fullWidth": true }
+      ],
+        "actions": [
+          { "label": "Daftar", "action": "auth:register", "variant": "ghost" },
+          { "label": "Masuk", "action": "auth:login", "variant": "ok" }
+        ]
+      },
+      { "kind": "object", "title": "Dokumentasi PDF (contoh)", "media": "pdf", "src": "07.pdf" }
+    ]
+  },
+
+  "dashboard": {
+    "nav_views": [
+      { "table": "users", "label": "Users" },
+      { "table": "presensi", "label": "Presensi" },
+      { "table": "chart", "label": "Grafik Presensi" },
+      { "table": "menu", "label": "Menu" },
+      { "table": "review", "label": "Review" },
+      { "table": "kuesioner_meta", "label": "Admin Kuesioner" },
+      { "table": "kuesioner_respons", "label": "Respon Kuesioner" },
+      { "table": "isi_kuesioner", "label": "Isi Kuesioner" },
+      { "table": "hasil_kuesioner", "label": "Hasil Kuesioner" }
+    ],
+    "chart_view": {
+      "label": "Grafik Presensi",
+      "table": "presensi",
+      "title": "Grafik Status Presensi"
+    }
+  }
+}
