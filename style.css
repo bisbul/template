@@ -1,6 +1,6 @@
 
     :root{
-      --bg:#0f172a; --panel:#111827; --muted:#334155; --soft:#1f2937; --text:#e5e7eb; --hi:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --bg:#0f172a; --panel:#111827; --muted:#334155; --soft:#1f2937; --text:#e5e7eb; --hi:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --bad:#ff0044;  // ef4444
       --card:#0b1220; --border:#223047;
     }
     *{box-sizing:border-box}
@@ -13,13 +13,41 @@
     .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     .title{font-weight:700;font-size:18px}
     .subtle{color:#93a4bf}
-    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--border);padding:10px 14px;border-radius:12px;color:var(--text);cursor:pointer}
+    /* .btn{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--border);padding:10px 14px;border-radius:12px;color:var(--text);cursor:pointer} */
     .btn:hover{background:#223047}
     .btn.hi{background:var(--hi);color:#0b1220;border-color:transparent}
     .btn.ok{background:var(--ok);color:#06120f;border-color:transparent}
-    .btn.bad{background:var(--bad)}
+    /* .btn.bad{background:var(--bad)} */
     .btn.warn{background:var(--warn);color:#161000}
     .btn.ghost{background:transparent}
+
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--soft); /* Background default */
+      color: var(--text); /* Warna teks default */
+    }
+
+    .btn.bad {
+      color: #ffffff;
+      background: var(--bad); /* #ef4444 */
+      border-color: var(--bad);
+    }
+
+    .btn.bad:hover {
+      background: #c0392b; /* Warna merah yang lebih gelap */
+      border-color: #c0392b;
+      opacity: 0.9;
+    }
+
+
     .input, select, textarea{background:#0c1424;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:12px;width:100%}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
     .g-6{grid-column:span 6}

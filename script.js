@@ -64,7 +64,7 @@ const DataStore = {
   async find(name, id) {
     try {
       const result = await this._fetch('GET', name, {}, id);
-      return result; // Mengembalikan objek result penuh {ok, data}
+      return result.data;
     } catch (e) {
       return null;
     }
@@ -216,7 +216,6 @@ const PresetUI = {
 
   async table(el, comp){
     let rows = await DataStore.load(comp.table) || [];
-    // Gunakan columns dari comp, atau infer, atau custom untuk kuesioner_meta
     const cols = comp.columns || this._inferColumns(rows);
     const searchBox = comp.search!==false;
     const toolbar = document.createElement('div'); toolbar.className='toolbar';
@@ -260,8 +259,10 @@ const PresetUI = {
     el.innerHTML = `<div class="title" style="margin-bottom:8px">${comp.title||'Form'}</div>`;
     const grid=document.createElement('div'); grid.className='grid';
     schema.forEach(f=>{
+      const inputId = `form-input-${comp.table}-${f.key}`;
       const col=document.createElement('div'); col.className = f.fullWidth? 'g-12':'g-6';
-      col.innerHTML = `<label class="subtle" style="display:block;margin-bottom:6px">${f.label||f.key}</label>${this._inputFor(f, model[f.key])}`;
+      // Menggunakan atribut 'for'
+      col.innerHTML = `<label for="${inputId}" class="subtle" style="display:block;margin-bottom:6px">${f.label||f.key}</label>${this._inputFor(f, model[f.key], inputId)}`;
       grid.appendChild(col);
     });
     el.appendChild(grid);
@@ -308,23 +309,21 @@ const PresetUI = {
 
   object(el, comp){
     el.innerHTML = `<div class="header"><div class="title">${comp.title||'Object'}</div></div>`;
-    const t = comp.media||'image'; const src = comp.src;
+    const t = comp.media||'image';
+    const src = comp.src;
+    // FIX: Menambahkan atribut title pada iframe untuk aksesibilitas
+    const iframeTitle = comp.title ? `${comp.title}` : 'Konten Tersemat (PDF)';
+
     if(t==='image') el.innerHTML += `<img src="${src}" style="max-width:100%;border-radius:12px;border:1px solid var(--border)"/>`;
     if(t==='video') el.innerHTML += `<video controls style="width:100%;border-radius:12px;border:1px solid var(--border)"><source src="${src}"></video>`;
-    if(t==='pdf') el.innerHTML += `<iframe style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px" src="${src}"></iframe>`;
+    if(t==='pdf') el.innerHTML += `<iframe title="${iframeTitle}" style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px" src="${src}"></iframe>`;
   },
 
-  // --- KOMPONEN KUESIONER ---
+  // --- BARU: KOMPONEN KUESIONER ---
   kuisioner_form: function(el, comp){
     const { title, questions, options, table } = comp;
 
     el.innerHTML = `<div class="title" style="margin-bottom:12px">${title||'Kuesioner'}</div>`;
-
-    // Cek apakah data tersedia
-    if (!questions || questions.length === 0) {
-         el.innerHTML += `<p class="subtle">Kuesioner belum memiliki pertanyaan atau gagal dimuat.</p>`;
-         return;
-    }
 
     const formEl = document.createElement('div');
     formEl.className = 'grid'; // Gunakan grid untuk layout pertanyaan
@@ -334,6 +333,7 @@ const PresetUI = {
         col.className = 'g-12 panel' // Setiap pertanyaan menjadi satu panel penuh
 
         // Label Pertanyaan
+        // Tidak perlu for karena label ini hanya label heading pertanyaan
         col.innerHTML = `<label class="subtle" style="display:block;margin-bottom:10px; font-weight: bold;">${index + 1}. ${q.label}</label>`;
 
         // Input Radio/Select untuk Jawaban
@@ -343,7 +343,7 @@ const PresetUI = {
         radioGroup.style.flexWrap = 'wrap';
 
         options.forEach(opt => {
-            const radioId = `${q.key}-${opt.value}`;
+            const radioId = `${q.key}-${opt.value}`; // Unique ID untuk input radio
             const radioHtml = `
                 <div style="display:flex;align-items:center;gap:4px;">
                     <input type="radio" id="${radioId}" name="${q.key}" data-key="${q.key}" value="${opt.value}" required>
@@ -383,7 +383,7 @@ const PresetUI = {
   _collectKuisionerForm: function(scope, questions, kuesionerId) {
       const responses = [];
       const userId = Auth.current?.id;
-      if (!userId) { alert('Anda harus login untuk mengisi kuesioner.'); return null; }
+      if (!userId) { alert('Anda harus login untuk mengisi kuesioner.'); return null; } // Tambahkan alert login
 
       let allAnswered = true;
 
@@ -432,16 +432,21 @@ const PresetUI = {
     const keys = Object.keys(model||{}).filter(k=>k!=='id');
     return keys.map(k=>({key:k,label:k,type:'text'}))
   },
-  _inputFor(f, val){
+
+  // Memperbaiki _inputFor untuk menerima dan menerapkan ID
+  _inputFor(f, val, inputId){
     const t = f.type||'text'; const v= (val==null?'':val);
-    if(t==='select') return `<select data-key="${f.key}" class="input">${(f.options||[]).map(o=>`<option ${String(o.value)==String(v)?'selected':''} value="${o.value}">${o.label}</option>`).join('')}</select>`
-    if(t==='textarea') return `<textarea data-key="${f.key}" class="input" rows="4">${this._escape(String(v))}</textarea>`
-    if(t==='number') return `<input data-key="${f.key}" class="input" type="number" value="${this._escape(String(v))}"/>`
-    if(t==='date') return `<input data-key="${f.key}" class="input" type="date" value="${this._escape(String(v))}"/>`
-    if(t==='email') return `<input data-key="${f.key}" class="input" type="email" value="${this._escape(String(v))}"/>`
-    if(t==='password') return `<input data-key="${f.key}" class="input" type="password" value="${this._escape(String(v))}"/>`
-    return `<input data-key="${f.key}" class="input" type="text" value="${this._escape(String(v))}"/>`
+    const idAttr = inputId ? `id="${inputId}"` : '';
+
+    if(t==='select') return `<select ${idAttr} data-key="${f.key}" class="input">${(f.options||[]).map(o=>`<option ${String(o.value)==String(v)?'selected':''} value="${o.value}">${o.label}</option>`).join('')}</select>`
+    if(t==='textarea') return `<textarea ${idAttr} data-key="${f.key}" class="input" rows="4">${this._escape(String(v))}</textarea>`
+    if(t==='number') return `<input ${idAttr} data-key="${f.key}" class="input" type="number" value="${this._escape(String(v))}"/>`
+    if(t==='date') return `<input ${idAttr} data-key="${f.key}" class="input" type="date" value="${this._escape(String(v))}"/>`
+    if(t==='email') return `<input ${idAttr} data-key="${f.key}" class="input" type="email" value="${this._escape(String(v))}"/>`
+    if(t==='password') return `<input ${idAttr} data-key="${f.key}" class="input" type="password" value="${this._escape(String(v))}"/>`
+    return `<input ${idAttr} data-key="${f.key}" class="input" type="text" value="${this._escape(String(v))}"/>`
   },
+
   _collectForm(scope, schema, id){
     const data = {id};
     schema.forEach(f=>{
@@ -566,14 +571,14 @@ const Presets = {
           const kuisionerData = await DataStore.find('kuesioner_meta', 1);
 
           let skemaKuisioner = null;
-          if (kuisionerData && kuisionerData.data) {
+          if (kuisionerData) {
               try {
                   // Parse JSON strings fetched from D1
                   skemaKuisioner = {
-                      id: kuisionerData.data.id,
-                      judul: kuisionerData.data.name,
-                      questions: JSON.parse(kuisionerData.data.questions || '[]'),
-                      options: JSON.parse(kuisionerData.data.options || '[]')
+                      id: kuisionerData.id,
+                      judul: kuisionerData.name,
+                      questions: JSON.parse(kuisionerData.questions || '[]'),
+                      options: JSON.parse(kuisionerData.options || '[]')
                   };
               } catch (e) {
                   console.error("Failed to parse kuesioner JSON from API:", e);
@@ -585,14 +590,14 @@ const Presets = {
               const staticSkema = config.kuesioner_skema?.q_kepuasan;
               if (staticSkema) {
                    try {
-                        skemaKuisioner = {
-                            id: staticSkema.id,
-                            judul: staticSkema.judul,
-                            questions: JSON.parse(staticSkema.questions || '[]'),
-                            options: JSON.parse(staticSkema.options || '[]')
-                        };
+                         skemaKuisioner = {
+                              id: staticSkema.id,
+                              judul: staticSkema.judul,
+                              questions: JSON.parse(staticSkema.questions || '[]'),
+                              options: JSON.parse(staticSkema.options || '[]')
+                         };
                    } catch (e) {
-                        console.error("Failed to parse static kuesioner JSON:", e);
+                         console.error("Failed to parse static kuesioner JSON:", e);
                    }
               }
           }
@@ -603,7 +608,7 @@ const Presets = {
               mainComponents = [{ kind: 'header', title: 'Error', subtitle: 'Kuesioner aktif (ID 1) tidak ditemukan atau gagal dimuat.' }];
 
           } else if (view === 'isi_kuesioner') {
-              // 2. Tampilan Isi Kuesioner (Responder) - COHERENCE POINT 1
+              // 2. Tampilan Isi Kuesioner (Responder)
               mainComponents = [
                   {
                       kind: 'kuisioner_form',
@@ -614,7 +619,7 @@ const Presets = {
                   }
               ];
           } else if (view === 'hasil_kuesioner') {
-              // 3. Tampilan Hasil Kuesioner (Chart) - COHERENCE POINT 2
+              // 3. Tampilan Hasil Kuesioner (Chart)
               const questions = skemaKuisioner.questions;
               const kuisionerId = skemaKuisioner.id;
 
@@ -669,16 +674,18 @@ const Presets = {
 
       } else if (view === 'chart') {
           // Logika Chart Presensi (Existing)
-          // ... (Tidak Berubah)
           const chartConfig = config.dashboard.chart_view;
           const tableSource = chartConfig.table;
+          const sourceTableConf = tableConfigs[tableSource] || {};
+
+          const chartTypeActions = [
+            {label:'Pie', action:'state:set', key: 'chartType', value: 'pie', variant: chartType === 'pie' ? 'ok' : 'ghost'},
+            {label:'Bar', action:'state:set', key: 'chartType', value: 'bar', variant: chartType === 'bar' ? 'ok' : 'ghost'},
+            {label:'Line', action:'state:set', key: 'chartType', value: 'line', variant: chartType === 'line' ? 'ok' : 'ghost'}
+          ];
 
           mainComponents = [
-            {kind: 'toolbar', actions: [
-                {label:'Pie', action:'state:set', key: 'chartType', value: 'pie', variant: chartType === 'pie' ? 'ok' : 'ghost'},
-                {label:'Bar', action:'state:set', key: 'chartType', value: 'bar', variant: chartType === 'bar' ? 'ok' : 'ghost'},
-                {label:'Line', action:'state:set', key: 'chartType', value: 'line', variant: chartType === 'line' ? 'ok' : 'ghost'}
-            ]},
+            {kind: 'toolbar', actions: chartTypeActions},
             {kind:'chart', title: chartConfig.title, type: chartType, dataFn: async ()=>{
               const rows=await DataStore.load(tableSource);
               const groups = rows.reduce((m,r)=>{m[r.status]=(m[r.status]||0)+1;return m},{})
@@ -689,54 +696,55 @@ const Presets = {
               const groups = rows.reduce((m,r)=>{m[r.status]=(m[r.status]||0)+1;return m},{})
               return Object.entries(groups).map(([label, value]) => ({label, value}));
             }},
-            {kind:'table', title:`Ringkas Presensi`, table:tableSource, onAdd:false}
+            {kind:'table', title:`Ringkas ${sourceTableConf.label || tableSource}`, table:tableSource, onAdd:false}
           ];
       } else {
-          // Tampilan Tabel Admin (Users/Presensi/Menu/Review/Kuesioner Admin/Respon Kuesioner)
+          // Tampilan Tabel Admin (Users/Presensi/Menu/Review/Kuesioner Admin)
           const tableKey = tableConfigs[view] ? view : 'users';
           const tableConf = tableConfigs[tableKey];
 
           // 1. Tampilan Admin Kuesioner (CRUD)
           if (tableKey === 'kuesioner_meta') {
-              // Kustomisasi kolom agar JSON tidak terlalu panjang di tabel
-              const adminKuisionerConf = { ...tableConf, columns: [
-                  { key: 'id', label: 'ID' },
-                  { key: 'name', label: 'Nama Kuesioner' },
-                  {
-                    key: 'questions',
-                    label: 'Questions',
-                    format: (v) => {
-                      try {
-                        return `Total: ${JSON.parse(v).length} Q`;
-                      } catch {
-                        return 'Invalid JSON';
-                      }
-                    }
-                  },
-                  {
-                    key: 'options',
-                    label: 'Options',
-                    format: (v) => {
-                      try {
-                        return `Total: ${JSON.parse(v).length} Opt`;
-                      } catch {
-                        return 'Invalid JSON';
-                      }
-                    }
-                  }
-              ]};
-              mainComponents = [
-                  {kind:'table', ...adminKuisionerConf, onAdd: 'table:add'}
-              ];
+             // Kustomisasi kolom agar JSON tidak terlalu panjang di tabel
+             const adminKuisionerConf = { ...tableConf, columns: [
+                 { key: 'id', label: 'ID' },
+                 { key: 'name', label: 'Nama Kuesioner' },
+                 {
+                   key: 'questions',
+                   label: 'Questions',
+                   format: (v) => {
+                     try {
+                       return `Total: ${JSON.parse(v).length} Q`;
+                     } catch {
+                       return 'Invalid JSON';
+                     }
+                   }
+                 },
+                 {
+                   key: 'options',
+                   label: 'Options',
+                   format: (v) => {
+                     try {
+                       return `Total: ${JSON.parse(v).length} Opt`;
+                     } catch {
+                       return 'Invalid JSON';
+                     }
+                   }
+                 }
+             ]};
+             mainComponents = [
+                 {kind:'table', ...adminKuisionerConf, onAdd: 'table:add'}
+             ];
           } else {
-              // Default table view for other tables (users, presensi, kuesioner_respons, etc.)
-              mainComponents = [
-                  {kind:'table', ...tableConf, onAdd: 'table:add'}
-              ];
+             // Default table view for other tables (users, presensi, kuesioner_respons, etc.)
+             mainComponents = [
+                 {kind:'table', ...tableConf, onAdd: 'table:add'}
+             ];
           }
       }
 
       // 2. Logika Navigasi (Menu Kiri)
+      // Membuat tombol navigasi dari JSON
       const tableNavActions = navViews.map(nav => {
         return {
           label: nav.label,
@@ -746,7 +754,8 @@ const Presets = {
           variant: nav.table === view ? 'ok' : 'ghost'
         }
       });
-      // ... (Logout action)
+
+      // Pisahkan tombol Logout
       const logoutAction = {label:'Keluar', action:'auth:logout', variant:'warn'};
 
 
@@ -786,7 +795,7 @@ const Presets = {
 };
 
 
- 
+
 
 /*******************
  * App Controller – glue everything together
@@ -820,7 +829,7 @@ const App = {
     EventBus.on('auth:register', async ()=>{
       const name = prompt('Nama lengkap?'); const email = prompt('Email?'); const password = prompt('Password?');
       if(!name || !email || !password) return alert('Semua field harus diisi');
-      try{ await Auth.register({name,email,password,role:'member'}); alert('Registrasi sukses. Silakan login.'); }
+      try{ await Auth.register({name,email,password, role:'member'}); alert('Registrasi sukses. Silakan login.'); }
       catch(e){ alert(e.message) }
     });
     EventBus.on('auth:logout', ()=>{ Auth.logout(); this.goto('login') });
@@ -834,11 +843,12 @@ const App = {
     });
 
     // --- HANDLER KUESIONER BARU ---
-    EventBus.on('kuisioner:submit', async ({data}) => { // 'table' payload diabaikan karena selalu 'kuesioner_respons'
+    EventBus.on('kuisioner:submit', async ({data, table}) => {
         try {
             // Data adalah array of objects (jawaban per pertanyaan)
             for (const response of data) {
-                // table di sini adalah ID Kuesioner, DataStore.upsert menggunakan nama tabel 'kuesioner_respons'
+                // table di sini adalah ID Kuesioner (misal: 1), tapi DataStore.upsert
+                // akan menggunakan nama tabel 'kuesioner_respons'
                 await DataStore.upsert('kuesioner_respons', response);
             }
             alert('Jawaban kuesioner berhasil disimpan! Terima kasih.');
@@ -852,29 +862,11 @@ const App = {
     // --- AKHIR HANDLER KUESIONER BARU ---
 
     // CRUD Actions
-    EventBus.on('table:add', ({table})=>{ // Memperbaiki bug skema tidak terkirim
-        const tableConf = Presets._config.tables[table];
-        if (tableConf) {
-            this.goto('editor', {table, row:{}, schema: tableConf.schema});
-        }
+    EventBus.on('table:add', ({table, schema})=>{
+        this.goto('editor', {table, row:{}, schema})
     });
 
-    EventBus.on('table:edit', async ({table, row})=>{ // Memperbaiki bug skema tidak terkirim & data terbaru
-      const tableConf = Presets._config.tables[table];
-      if (!tableConf) {
-        return alert(`Konfigurasi tabel ${table} tidak ditemukan.`);
-      }
-
-      // Ambil data terbaru dari API sebelum masuk form edit (PENTING untuk field JSON)
-      const fullRow = await DataStore.find(table, row.id);
-
-      if(fullRow && fullRow.data) {
-        // Gunakan skema yang benar dari config
-        this.goto('editor', {table, row: fullRow.data, schema: tableConf.schema});
-      } else {
-        alert('Gagal mengambil detail data untuk edit.');
-      }
-    });
+    EventBus.on('table:edit', ({table,row,schema})=>{ this.goto('editor', {table,row,schema}) });
 
     EventBus.on('table:delete', async ({table,row})=>{
       if(confirm('Hapus data ini?')){
