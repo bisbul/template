@@ -73,8 +73,8 @@
 
 
     .avatar {
-      width: 359px;
-      height: 135px;
+      width: 90px;
+      height: 90px;
       /* border-radius: 999px; */
       background-image: url('logo-informatika.png'); /* Mengganti gradient dengan gambar */
       background-size: cover; /* Memastikan gambar menutupi seluruh area tanpa distorsi */
