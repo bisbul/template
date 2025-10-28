@@ -16,7 +16,11 @@
         { "key": "role", "label": "Peran", "type": "select", "options": [
           { "label": "Admin", "value": "admin" },
           { "label": "Member", "value": "member" }
-        ]}
+        ]},
+        { "key": "face_data", "label": "face Data", "type": "textarea", "fullWidth": true }
+
+
+
       ]
     },
     "presensi": {
@@ -104,6 +108,9 @@
     ]
   },
 
+
+
+
   "dashboard": {
     "nav_views": [
       { "table": "users", "label": "Users" },
@@ -114,8 +121,10 @@
       { "table": "kuesioner_meta", "label": "Admin Kuesioner" },
       { "table": "kuesioner_respons", "label": "Respon Kuesioner" },
       { "table": "isi_kuesioner", "label": "Isi Kuesioner" },
-      { "table": "hasil_kuesioner", "label": "Hasil Kuesioner" }
+      { "table": "hasil_kuesioner", "label": "Hasil Kuesioner" },
+      { "action": "redirect:url", "label": "Presensi Wajah", "url": "presensi.html", "target": "_blank" }
     ],
+
     "chart_view": {
       "label": "Grafik Presensi",
       "table": "presensi",

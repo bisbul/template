@@ -1,0 +1,36 @@
+:root{--bg:#0f1720;--panel:#0b1220;--text:#e6eef6;--muted:#8fa4bf;--btn:#2b6cb0;--btn2:#334155;--border:#1b2b48}
+  *{box-sizing:border-box}
+  body{margin:16px;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,Segoe UI,Roboto,Arial}
+  .card{max-width:1100px;margin:auto;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+  h2{margin:0 0 10px}
+  .muted{color:var(--muted)}
+  label{display:block;margin:.5rem 0 .2rem;color:#9fb0c9}
+  input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #20314a;background:#071623;color:#dfeefc}
+  button{padding:8px 12px;border:0;border-radius:10px;background:var(--btn);color:#fff;cursor:pointer}
+  button.secondary{background:var(--btn2)}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .grid{display:grid;grid-template-columns:1fr 160px 160px 260px;gap:10px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+  #canvas{width:100%;max-width:1100px;border-radius:10px;background:#000;display:block}
+  #video{width:100%;max-width:1100px;border-radius:10px;margin:8px 0;display:none;opacity:.7}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a2a44;margin-left:6px}
+  pre{white-space:pre-wrap}
+  nav{display:flex;gap:8px;margin:8px 0 14px}
+  nav button{background:#24324a}
+  nav button.active{background:#2b6cb0}
+  .section{display:none}
+  .section.active{display:block}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{border:1px solid #1b2b48;padding:6px 8px;text-align:left}
+  th{background:#0e1a2d}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#1a2a44;margin-left:6px}
+
+
+  .avatar {
+    width: 359px;
+    height: 135px;
+    /* border-radius: 999px; */
+    background-image: url('logo-informatika.png'); /* Mengganti gradient dengan gambar */
+    background-size: cover; /* Memastikan gambar menutupi seluruh area tanpa distorsi */
+    background-position: center; /* Memastikan gambar terpusat */
+  }

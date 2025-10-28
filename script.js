@@ -178,11 +178,17 @@ const PresetUI = {
     });
   },
 
+  // --- MODIFIKASI: Menambahkan penanganan data-url dan data-target ---
   _renderToolbarButtons: function(comp){
     return (comp.actions||[]).map(a=>{
       const attrs = Object.entries(a).map(([k, v]) => {
         if (a.action === 'state:set' && (k === 'key' || k === 'value')) {
           return `data-${k}="${v}"`;
+        }
+        // Penanganan untuk redirect:url
+        if (a.action === 'redirect:url') {
+            if (k === 'url') return `data-url="${v}"`;
+            if (k === 'target') return `data-target="${v}"`;
         }
         return '';
       }).join(' ');
@@ -190,6 +196,7 @@ const PresetUI = {
       return `<button class="btn ${a.variant||'ghost'}" data-action="${a.action}" ${attrs}>${a.label}</button>`;
     }).join('');
   },
+  // --------------------------------------------------------------------
 
   toolbar(el, comp){
     const buttonHtml = PresetUI._renderToolbarButtons(comp);
@@ -209,6 +216,16 @@ const PresetUI = {
         payload.key = b.dataset.key;
         payload.value = b.dataset.value;
       }
+
+      // --- MODIFIKASI: Mengambil data-url dan data-target ---
+      if (b.dataset.url) {
+          payload.url = b.dataset.url;
+
+          if (b.dataset.target) {
+              payload.target = b.dataset.target;
+          }
+      }
+      // ------------------------------------------------------
 
       EventBus.emit(b.dataset.action, payload);
     })
@@ -319,7 +336,7 @@ const PresetUI = {
     if(t==='pdf') el.innerHTML += `<iframe title="${iframeTitle}" style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px" src="${src}"></iframe>`;
   },
 
-  // --- BARU: KOMPONEN KUESIONER ---
+  // --- KOMPONEN KUESIONER ---
   kuisioner_form: function(el, comp){
     const { title, questions, options, table } = comp;
 
@@ -408,22 +425,38 @@ const PresetUI = {
   },
   // --- AKHIR KOMPONEN KUESIONER ---
 
+
   _renderTableBody(tbody, rows, cols, comp){
-    const data = rows;
-    tbody.innerHTML='';
-    data.forEach(r=>{
-      const tr=document.createElement('tr');
-      cols.forEach(c=>{
-        const v = r[c.key];
-        tr.innerHTML += `<td>${c.format? c.format(v,r): (v==null?'':this._escape(String(v)))}</td>`
+      const data = rows;
+      tbody.innerHTML='';
+      data.forEach(r=>{
+        const tr=document.createElement('tr');
+        cols.forEach(c=>{
+          const v = r[c.key];
+
+          // --- START: MODIFIKASI INI ---
+          let cellContent;
+          if (c.format) {
+              cellContent = c.format(v, r);
+          } else {
+              const rawValue = v == null ? '' : String(v);
+              // Batasi teks hingga 25 karakter
+              const escapedValue = this._escape(rawValue);
+              cellContent = escapedValue.length > 25 ? escapedValue.substring(0, 25) + '...' : escapedValue;
+          }
+          tr.innerHTML += `<td>${cellContent}</td>`
+          // --- END: MODIFIKASI INI ---
+
+        })
+        const actions = document.createElement('td'); actions.style.textAlign='right';
+        const edit=document.createElement('button'); edit.className='btn'; edit.textContent='Edit'; edit.onclick=()=>EventBus.emit(comp.onRowClick||'table:edit', {table:comp.table, row:r, schema:comp.schema});
+        const del=document.createElement('button'); del.className='btn bad'; del.style.marginLeft='8px'; del.textContent='Hapus'; del.onclick=()=>EventBus.emit('table:delete', {table:comp.table, row:r});
+        actions.appendChild(edit); actions.appendChild(del); tr.appendChild(actions);
+        tbody.appendChild(tr);
       })
-      const actions = document.createElement('td'); actions.style.textAlign='right';
-      const edit=document.createElement('button'); edit.className='btn'; edit.textContent='Edit'; edit.onclick=()=>EventBus.emit(comp.onRowClick||'table:edit', {table:comp.table, row:r, schema:comp.schema});
-      const del=document.createElement('button'); del.className='btn bad'; del.style.marginLeft='8px'; del.textContent='Hapus'; del.onclick=()=>EventBus.emit('table:delete', {table:comp.table, row:r});
-      actions.appendChild(edit); actions.appendChild(del); tr.appendChild(actions);
-      tbody.appendChild(tr);
-    })
-  },
+    },
+
+
   _inferColumns(rows){
     const keys = rows[0]? Object.keys(rows[0]): ['id'];
     return keys.map(k=>({key:k,label:k}))
@@ -746,6 +779,17 @@ const Presets = {
       // 2. Logika Navigasi (Menu Kiri)
       // Membuat tombol navigasi dari JSON
       const tableNavActions = navViews.map(nav => {
+        // Cek jika action adalah redirect:url
+        if (nav.action === 'redirect:url') {
+            return {
+                label: nav.label,
+                action: nav.action,
+                url: nav.url,
+                target: nav.target, // Ambil target
+                variant: 'ghost'
+            };
+        }
+        // Jika action adalah state:set
         return {
           label: nav.label,
           action: 'state:set',
@@ -841,6 +885,18 @@ const App = {
             this.goto('dashboard');
         }
     });
+
+    // --- BARU: HANDLER REDIRECT:URL ---
+    EventBus.on('redirect:url', (payload) => {
+        if (payload.url) {
+            // Gunakan window.open() dengan target. Default target adalah '_self' (tab saat ini)
+            const target = payload.target || '_self';
+            window.open(payload.url, target);
+        } else {
+            console.error('Redirect URL tidak ditemukan dalam payload.');
+        }
+    });
+    // ------------------------------------
 
     // --- HANDLER KUESIONER BARU ---
     EventBus.on('kuisioner:submit', async ({data, table}) => {
